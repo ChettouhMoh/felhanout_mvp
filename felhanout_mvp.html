@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FelHanout — MVP Launch Readiness</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:             #0B0D12;
+      --surface:        #13151C;
+      --surface-raised: #1B1E28;
+      --border:         rgba(255,255,255,0.07);
+      --border-hover:   rgba(255,255,255,0.13);
+      --text:           #E5E7EF;
+      --muted:          #6B7089;
+      --accent:         #FF5C2B;
+      --accent-glow:    rgba(255,92,43,0.18);
+      --green:          #22C997;
+      --green-soft:     rgba(34,201,151,0.13);
+      --amber:          #F5A623;
+      --amber-soft:     rgba(245,166,35,0.13);
+      --red:            #F05252;
+      --red-soft:       rgba(240,82,82,0.13);
+      --r:              12px;
+      --r-sm:           8px;
+      --ease:           0.18s ease;
+    }
+
+    html { font-size: 14px; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* subtle grid texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.013) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.013) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 5rem;
+    }
+
+    /* ── Header ────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .logo-wrap::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, var(--accent), transparent 60%);
+      z-index: -1;
+      opacity: 0.6;
+    }
+    .logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 13px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .header-text { flex: 1; }
+    .header-text h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      background: linear-gradient(120deg, #fff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-text p {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .launch-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 99px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(255,92,43,0.3);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      transition: all 0.4s ease;
+    }
+
+    /* ── Global progress ───────────────────────── */
+    .gp-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .gp-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), #FF8C5C 50%, transparent);
+    }
+
+    .gp-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.75rem;
+    }
+    .gp-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .gp-pct {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .track {
+      height: 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), #FF9060);
+      transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 10px rgba(255,92,43,0.5);
+    }
+
+    /* ── Stats ─────────────────────────────────── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.65rem;
+      margin-bottom: 1.25rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1rem 1.1rem;
+      transition: border-color var(--ease), transform var(--ease);
+    }
+    .stat-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .stat-num {
+      font-size: 1.9rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    .stat-label { font-size: 0.73rem; color: var(--muted); font-weight: 500; }
+
+    /* ── Legend ────────────────────────────────── */
+    .legend {
+      display: flex;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+    .pip { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Sections ───────────────────────────────── */
+    .sections { display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      transition: border-color var(--ease), box-shadow var(--ease);
+    }
+    .section:hover { border-color: var(--border-hover); }
+
+    .sec-header {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 0.9rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background var(--ease);
+    }
+    .sec-header:hover { background: rgba(255,255,255,0.022); }
+
+    .sec-icon {
+      font-size: 1rem;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      background: var(--accent-glow);
+      flex-shrink: 0;
+    }
+
+    .sec-info { flex: 1; min-width: 0; }
+    .sec-title { font-size: 0.88rem; font-weight: 600; }
+    .sec-sub { font-size: 0.73rem; color: var(--muted); margin-top: 1px; }
+
+    .sec-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+    .sec-bar { width: 60px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+    .sec-bar-fill { height: 100%; border-radius: 99px; background: var(--green); transition: width 0.4s ease; }
+    .sec-count { font-size: 0.73rem; color: var(--muted); white-space: nowrap; }
+    .chevron {
+      width: 15px; height: 15px;
+      color: var(--muted);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    .section.closed .chevron { transform: rotate(-90deg); }
+
+    /* ── Feature rows ───────────────────────────── */
+    .features { border-top: 1px solid var(--border); }
+
+    .feat-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      transition: background var(--ease);
+    }
+    .feat-row:last-child { border-bottom: none; }
+    .feat-row:hover { background: rgba(255,255,255,0.018); }
+
+    .feat-pip { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .feat-name { flex: 1; font-size: 0.84rem; }
+
+    .status-btn {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 99px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity var(--ease), transform var(--ease), filter var(--ease);
+      letter-spacing: 0.02em;
+    }
+    .status-btn:hover { opacity: 0.8; transform: scale(1.06); }
+    .status-btn:active { transform: scale(0.96); }
+
+    .s-todo  { background: var(--red-soft);   color: var(--red);   border-color: rgba(240,82,82,0.25); }
+    .s-prog  { background: var(--amber-soft); color: var(--amber); border-color: rgba(245,166,35,0.25); }
+    .s-done  { background: var(--green-soft); color: var(--green); border-color: rgba(34,201,151,0.25); }
+
+    /* ── Bottom actions ─────────────────────────── */
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.79rem;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all var(--ease);
+    }
+    .btn:hover { border-color: var(--border-hover); color: var(--text); background: var(--surface-raised); }
+    .btn-primary {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border-color: rgba(255,92,43,0.35);
+    }
+    .btn-primary:hover { background: rgba(255,92,43,0.22); color: var(--accent); }
+
+    /* ── Toast ──────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-hover);
+      border-radius: var(--r-sm);
+      padding: 9px 15px;
+      font-size: 0.79rem;
+      color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      transform: translateY(80px) scale(0.96);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .toast.show { transform: translateY(0) scale(1); opacity: 1; }
+
+    /* ── Responsive ─────────────────────────────── */
+    @media (max-width: 620px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .sec-bar { display: none; }
+      .launch-badge { display: none; }
+      .gp-pct { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="logo-wrap">
+      <img src="felhanout-logo.jpeg" alt="FelHanout" class="logo" />
+    </div>
+    <div class="header-text">
+      <h1>FelHanout MVP Board</h1>
+      <p>Launch readiness tracker — 6 product surfaces</p>
+    </div>
+    <div class="launch-badge" id="launch-badge">🚀 Pre-launch</div>
+  </header>
+
+  <div class="gp-card">
+    <div class="gp-top">
+      <span class="gp-label">Must-have completion</span>
+      <span class="gp-pct" id="gp-pct">0%</span>
+    </div>
+    <div class="track"><div class="fill" id="gp-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num" id="s-total">0</div><div class="stat-label">Total features</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-done" style="color:var(--green)">0</div><div class="stat-label">Done</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-prog" style="color:var(--amber)">0</div><div class="stat-label">In progress</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-todo" style="color:var(--red)">0</div><div class="stat-label">Not started</div></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="pip" style="background:#F05252"></div>Must have — blocks launch</div>
+    <div class="legend-item"><div class="pip" style="background:#F5A623"></div>Should have — v1.1</div>
+    <div class="legend-item"><div class="pip" style="background:#6B7280"></div>Nice to have — roadmap</div>
+  </div>
+
+  <div class="sections" id="sections"></div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="exportSummary()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export summary
+    </button>
+    <button class="btn" onclick="resetAll()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.66"/></svg>
+      Reset all
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STATUSES = ['Not started', 'In progress', 'Done'];
+const PRI_COLORS = { must: '#F05252', should: '#F5A623', nice: '#6B7280' };
+const ICONS = { pro: '🍽️', consumer: '📱', rider: '🛵', qr: '📋', site: '🌐', backend: '⚙️', roadmap: '🗺️' };
+
+const SECTIONS = [
+  {
+    id: 'pro', label: 'FelHanout Pro', sub: 'Restaurant app · Flutter',
+    features: [
+      { name: 'Receive & display incoming orders (all channels)', p: 'must' },
+      { name: 'Confirm / reject order action', p: 'must' },
+      { name: 'Phone order manual entry by cashier', p: 'must' },
+      { name: 'Auto-dispatch order to available rider', p: 'must' },
+      { name: 'Rider assignment & tracking view', p: 'must' },
+      { name: 'Real-time order status updates', p: 'must' },
+      { name: 'Menu management (add / edit / hide items)', p: 'must' },
+      { name: 'Basic daily order history & stats', p: 'should' },
+      { name: 'Push notifications for new orders', p: 'must' },
+    ]
+  },
+  {
+    id: 'consumer', label: 'FelHanout Consumer App', sub: 'Consumer mobile app · Flutter',
+    features: [
+      { name: 'Restaurant discovery & directory', p: 'must' },
+      { name: 'Browse restaurant menu', p: 'must' },
+      { name: 'Place delivery order', p: 'must' },
+      { name: 'Order tracking (basic status)', p: 'must' },
+      { name: 'User registration & login', p: 'must' },
+      { name: 'Delivery address management', p: 'must' },
+      { name: 'Order history', p: 'should' },
+      { name: 'Ratings & reviews', p: 'nice' },
+    ]
+  },
+  {
+    id: 'rider', label: 'FelHanout Rider', sub: 'Rider mobile app · Flutter',
+    features: [
+      { name: 'Receive delivery offer notification', p: 'must' },
+      { name: 'Accept / decline delivery offer', p: 'must' },
+      { name: 'View pickup & drop-off address', p: 'must' },
+      { name: 'Mark delivery as completed', p: 'must' },
+      { name: 'Rider registration & profile', p: 'must' },
+      { name: 'Delivery earnings summary', p: 'should' },
+      { name: 'Multi-restaurant visibility', p: 'must' },
+    ]
+  },
+  {
+    id: 'qr', label: 'QR Table Menu', sub: 'Web · dine-in customers',
+    features: [
+      { name: 'Unique QR code generation per table', p: 'must' },
+      { name: 'Digital menu display (web, no install)', p: 'must' },
+      { name: 'Order submission to backend', p: 'must' },
+      { name: 'Order pushed to FelHanout Pro cashier', p: 'must' },
+      { name: 'Combo & add-on upsell suggestions', p: 'should' },
+    ]
+  },
+  {
+    id: 'site', label: 'Restaurant Mini-Site', sub: 'Web · per restaurant (felhanout.dz/amazonia)',
+    features: [
+      { name: 'SEO-optimized restaurant landing page', p: 'must' },
+      { name: 'Menu display', p: 'must' },
+      { name: 'Delivery order placement', p: 'must' },
+      { name: 'Meta Ads conversion tracking pixel', p: 'must' },
+      { name: 'Customer login & order history (single restaurant)', p: 'should' },
+    ]
+  },
+  {
+    id: 'backend', label: 'Backend & Infrastructure', sub: 'Laravel + MySQL central server',
+    features: [
+      { name: 'Order routing logic (channel → Pro → Rider)', p: 'must' },
+      { name: 'Authentication & roles (restaurant / rider / consumer)', p: 'must' },
+      { name: 'Real-time events (WebSocket / push)', p: 'must' },
+      { name: 'Restaurant & menu data management APIs', p: 'must' },
+      { name: 'Rider dispatch algorithm', p: 'must' },
+      { name: 'Meta Ads API integration', p: 'must' },
+      { name: 'Basic admin panel (validate restaurants, monitor)', p: 'must' },
+      { name: 'Error logging & monitoring', p: 'should' },
+    ]
+  },
+  {
+    id: 'roadmap', label: 'Post-Launch Roadmap', sub: 'Do NOT block launch on these',
+    features: [
+      { name: 'FelHanout Ads — contextual in-menu advertising', p: 'nice' },
+      { name: 'Cloud POS — offline-capable point of sale', p: 'nice' },
+      { name: 'Advanced analytics dashboard for restaurants', p: 'nice' },
+      { name: 'FMCG brand advertising channel', p: 'nice' },
+      { name: 'Nationwide expansion beyond Algiers', p: 'nice' },
+    ]
+  }
+];
+
+function defaultState() {
+  return SECTIONS.map(s => ({
+    id: s.id,
+    closed: s.id === 'roadmap',
+    feats: s.features.map(() => 'Not started')
+  }));
+}
+
+let state;
+try {
+  const raw = localStorage.getItem('fh_mvp_v3');
+  const parsed = raw ? JSON.parse(raw) : null;
+  state = (parsed && parsed.length === SECTIONS.length) ? parsed : defaultState();
+} catch { state = defaultState(); }
+
+const save = () => { try { localStorage.setItem('fh_mvp_v3', JSON.stringify(state)); } catch {} };
+const get  = (si, fi) => state[si]?.feats[fi] || 'Not started';
+
+function cycle(si, fi) {
+  const cur = get(si, fi);
+  const nxt = STATUSES[(STATUSES.indexOf(cur) + 1) % STATUSES.length];
+  state[si].feats[fi] = nxt;
+  save();
+  render();
+  if (nxt === 'Done') toast('Marked as done ✓');
+}
+
+function toggle(si) {
+  state[si].closed = !state[si].closed;
+  save();
+  render();
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function sClass(s) {
+  return s === 'Done' ? 's-done' : s === 'In progress' ? 's-prog' : 's-todo';
+}
+function sLabel(s) {
+  return s === 'Done' ? '✓ Done' : s === 'In progress' ? '● In progress' : '○ Not started';
+}
+
+function render() {
+  let html = '';
+  let total = 0, done = 0, prog = 0, todo = 0, mustTotal = 0, mustDone = 0;
+
+  SECTIONS.forEach((sec, si) => {
+    const closed = state[si]?.closed;
+    const secDone = sec.features.filter((_, fi) => get(si, fi) === 'Done').length;
+    const pct = sec.features.length ? Math.round(secDone / sec.features.length * 100) : 0;
+
+    sec.features.forEach((f, fi) => {
+      const st = get(si, fi);
+      total++;
+      if (st === 'Done') done++;
+      else if (st === 'In progress') prog++;
+      else todo++;
+      if (f.p === 'must') { mustTotal++; if (st === 'Done') mustDone++; }
+    });
+
+    html += `<div class="section ${closed ? 'closed' : ''}">
+      <div class="sec-header" onclick="toggle(${si})">
+        <div class="sec-icon">${ICONS[sec.id] || '📌'}</div>
+        <div class="sec-info">
+          <div class="sec-title">${sec.label}</div>
+          <div class="sec-sub">${sec.sub}</div>
+        </div>
+        <div class="sec-right">
+          <div class="sec-bar"><div class="sec-bar-fill" style="width:${pct}%"></div></div>
+          <span class="sec-count">${secDone}/${sec.features.length}</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+      </div>`;
+
+    if (!closed) {
+      html += `<div class="features">`;
+      sec.features.forEach((f, fi) => {
+        const st = get(si, fi);
+        html += `<div class="feat-row">
+          <div class="feat-pip" style="background:${PRI_COLORS[f.p]}" title="${f.p} priority"></div>
+          <span class="feat-name">${f.name}</span>
+          <button class="status-btn ${sClass(st)}" onclick="cycle(${si},${fi})">${sLabel(st)}</button>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+
+  document.getElementById('sections').innerHTML = html;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-done').textContent  = done;
+  document.getElementById('s-prog').textContent  = prog;
+  document.getElementById('s-todo').textContent  = todo;
+
+  const pct = mustTotal ? Math.round(mustDone / mustTotal * 100) : 0;
+  document.getElementById('gp-pct').textContent    = pct + '%';
+  document.getElementById('gp-fill').style.width   = pct + '%';
+
+  const badge = document.getElementById('launch-badge');
+  if (pct === 100) {
+    badge.textContent = '🎉 Launch ready!';
+    badge.style.cssText = 'background:rgba(34,201,151,0.15);color:#22C997;border-color:rgba(34,201,151,0.35)';
+  } else {
+    badge.textContent = '🚀 Pre-launch';
+    badge.style.cssText = '';
+  }
+}
+
+function exportSummary() {
+  const lines = [
+    'FelHanout MVP — Launch Readiness Export',
+    `Generated: ${new Date().toLocaleString()}`,
+    ''
+  ];
+  SECTIONS.forEach((sec, si) => {
+    lines.push(`== ${sec.label} (${sec.sub}) ==`);
+    sec.features.forEach((f, fi) => {
+      lines.push(`  [${get(si, fi)}] (${f.p}) ${f.name}`);
+    });
+    lines.push('');
+  });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/plain' })),
+    download: 'felhanout-mvp-readiness.txt'
+  });
+  a.click();
+  toast('Export downloaded ↓');
+}
+
+function resetAll() {
+  if (!confirm('Reset all feature statuses to "Not started"?')) return;
+  state = defaultState();
+  save();
+  render();
+  toast('Board reset');
+}
+
+render();
+</script>
+</body>
+</html>
